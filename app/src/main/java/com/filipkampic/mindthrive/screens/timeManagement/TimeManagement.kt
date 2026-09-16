@@ -393,14 +393,18 @@ fun TimeManagement(navController: NavController, date: String) {
                                                                 val draggedIndex = draggedItemIndex.value!!
                                                                 val targetIndex = hoveredIndex.value!!
                                                                 if (draggedIndex != targetIndex) {
+                                                                    val originalSlots = todaysTimeBlocks
+                                                                        .filter { it.start != null && it.end != null }
+                                                                        .sortedBy { it.start }
+                                                                        .map { it.start!! to it.end!! }
                                                                     val draggedTimeBlock = localTimeBlockList[draggedIndex]
                                                                     localTimeBlockList.removeAt(draggedIndex)
                                                                     localTimeBlockList.add(targetIndex, draggedTimeBlock)
 
-                                                                    val reflowedTimeBlocks = reflowTimeBlocks(localTimeBlockList, currentDate)
-                                                                    reflowedTimeBlocks.forEach { viewModel.updateTimeBlock(it) }
+                                                                    val reassigned = reassignTimeSlots(localTimeBlockList, originalSlots, currentDate)
+                                                                    reassigned.forEach { viewModel.updateTimeBlock(it) }
                                                                     localTimeBlockList.clear()
-                                                                    localTimeBlockList.addAll(reflowedTimeBlocks)
+                                                                    localTimeBlockList.addAll(reassigned)
                                                                 }
                                                             }
                                                             draggedItemIndex.value = null
@@ -488,36 +492,16 @@ fun TimeManagement(navController: NavController, date: String) {
     }
 }
 
-private fun reflowTimeBlocks(timeBlocks: List<TimeBlock>, baseDate: LocalDate): List<TimeBlock> {
-    if (timeBlocks.isEmpty()) return timeBlocks
-
-    val durationById: Map<String, Duration> = timeBlocks
-        .filter { it.start != null && it.end != null }
-        .associate { it.id to Duration.between(it.start, it.end) }
-
-    val newTimeBlocks = mutableListOf<TimeBlock>()
-    var currentTime = LocalDateTime.of(baseDate, LocalTime.of(0, 0))
-
-    timeBlocks.forEachIndexed { index, timeBlock ->
-        if (timeBlock.start == null || timeBlock.end == null) return@forEachIndexed
-
-        val fixedDuration = durationById[timeBlock.id] ?: Duration.between(timeBlock.start, timeBlock.end)
-
-        if (index > 0 && newTimeBlocks.isNotEmpty()) {
-            currentTime = newTimeBlocks.last().end ?: currentTime
-        }
-
-        val newTimeBlock = timeBlock.copy(
-            start = currentTime,
-            end = currentTime.plus(fixedDuration),
-            date = baseDate
-        )
-
-        newTimeBlocks.add(newTimeBlock)
-        currentTime = newTimeBlock.end
+private fun reassignTimeSlots(
+    reorderedBlocks: List<TimeBlock>,
+    originalSlots: List<Pair<LocalDateTime, LocalDateTime>>,
+    baseDate: LocalDate
+): List<TimeBlock> {
+    return reorderedBlocks.mapIndexed { index, block ->
+        val slot = originalSlots.getOrNull(index)
+        if (slot != null) block.copy(start = slot.first, end = slot.second, date = baseDate)
+        else block
     }
-
-    return newTimeBlocks
 }
 
 @Composable
