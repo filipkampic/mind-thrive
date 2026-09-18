@@ -31,6 +31,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -109,6 +110,12 @@ fun Pomodoro(
     val context = LocalContext.current
     val mediaPlayer = remember { MediaPlayer.create(context, R.raw.alarm_sound)}
 
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
+
     fun resetAllStates() {
         currentSession = 1
         completedSessions = 0
@@ -149,9 +156,9 @@ fun Pomodoro(
         }
     }
 
-    LaunchedEffect(isRunning.value, isPaused, isWaitingForNextPhase, timeLeft) {
+    LaunchedEffect(isRunning.value, isPaused, isWaitingForNextPhase) {
         if (isRunning.value && !isPaused && !isWaitingForNextPhase) {
-            while (timeLeft > 0) {
+            while (timeLeft > 0 && isRunning.value && !isPaused && !isWaitingForNextPhase) {
                 delay(1000L)
                 timeLeft--
                 totalTimeInSeconds++
@@ -170,6 +177,7 @@ fun Pomodoro(
                     isReset = true
                     showResults = true
                     viewModel.logFocusSession(totalTimeInSeconds)
+                    viewModel.addFocusToPreferences(totalTimeInSeconds)
                 } else {
                     if (!isOnBreak) {
                         completedSessions++
