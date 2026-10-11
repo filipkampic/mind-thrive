@@ -29,3 +29,15 @@ The application follows the **MVVM (Model–View–ViewModel)** architecture, wi
 ## Project
 
 Developed as part of the master's thesis at **FERIT Osijek**.
+
+## Screenshots
+
+| Home | Time Management | Tasks |
+| :---: | :---: | :---: |
+| <img src="screenshots/home.png" width="220" alt="Home"/> | <img src="screenshots/time-management.png" width="220" alt="Time Management"/> | <img src="screenshots/tasks.png" width="220" alt="Tasks"/> |
+
+| Focus | Goals |
+| :---: | :---: |
+| <img src="screenshots/focus.png" width="220" alt="Focus"/> | <img src="screenshots/goals.png" width="220" alt="Goals"/> |
+
+
